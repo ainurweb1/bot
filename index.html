@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Maira - Motivation Assistant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #5D3A5A, #2F3C5A, #4A4A6A);
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .floating-text {
+      position: absolute;
+      font-size: 24px;
+      font-weight: bold;
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+      white-space: nowrap;
+      color: #E0C0C0;
+    }
+
+    #chat-container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: rgba(40, 30, 45, 0.6);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(224, 192, 192, 0.2);
+    }
+
+    .logo {
+      width: 50px;
+      height: 50px;
+      background: #E0C0C0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #5D3A5A;
+    }
+
+    .header-info h1 {
+      font-size: 24px;
+      margin-bottom: 4px;
+      color: #FFD7D7;
+    }
+
+    .header-info p {
+      font-size: 14px;
+      opacity: 0.9;
+      color: #D0D0E0;
+    }
+
+    #chat-box {
+      height: 400px;
+      overflow-y: auto;
+      padding: 20px;
+      background: rgba(30, 25, 40, 0.65);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(180, 160, 190, 0.3);
+    }
+
+    .message {
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      max-width: 85%;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+
+    .user-message {
+      background: rgba(180, 150, 180, 0.3);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .bot-message {
+      background: rgba(50, 60, 90, 0.4);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      color: #E6E6FF;
+    }
+
+    #input-area {
+      display: flex;
+      gap: 10px;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(60, 50, 70, 0.5);
+      color: white;
+      font-size: 16px;
+      outline: none;
+      border: 1px solid rgba(200, 180, 200, 0.3);
+    }
+
+    #user-input::placeholder {
+      color: rgba(220, 210, 230, 0.6);
+    }
+
+    #send-btn {
+      padding: 14px 24px;
+      background: #A06070;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    #send-btn:hover {
+      background: #B05060;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.1);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(180, 160, 190, 0.5);
+      border-radius: 4px;
+    }
+
+    .message-container {
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div class="header">
+      <div class="logo">📚</div>
+      <div class="header-info">
+        <h1>Майра</h1>
+        <p>Достар, менің көмегімді қабыл алыңыздар. Кеттік...</p>
+      </div>
+    </div>
+    <div id="chat-box">
+      <div class="message bot-message">
+        Hello! I'm Maira, your super assistant on motivation and human development. I know everything about this topic! Ask me anything in Kazakh or English.
+      </div>
+      <div class="message bot-message">
+        Сәлеметсіз бе! Мен – Майра, мотивация мен адам дамуы туралы барлығын білетін супер-ботпын! Сұрағыңызды қазақша немесе ағылшынша қойыңыз.
+      </div>
+    </div>
+    <div id="input-area">
+      <input type="text" id="user-input" placeholder="Сұрағыңызды жазыңыз..." />
+      <button id="send-btn">Жіберу</button>
+    </div>
+  </div>
+
+  <script>
+    // Floating background text
+    const words = ["Мотивация", "Жігер", "Motivation", "Drive", "Inspiration", "Ынталандыру", "Goal", "Мақсат", "Success", "Табыс"];
+    const body = document.body;
+
+    for (let i = 0; i < 30; i++) {
+      const span = document.createElement('div');
+      span.className = 'floating-text';
+      span.innerText = words[Math.floor(Math.random() * words.length)];
+      span.style.top = Math.random() * 100 + '%';
+      span.style.left = Math.random() * 100 + '%';
+      span.style.animation = `float ${15 + Math.random() * 20}s infinite ease-in-out`;
+      span.style.fontSize = (16 + Math.random() * 20) + 'px';
+      body.appendChild(span);
+    }
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes float {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        25% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(${Math.random() * 20 - 10}deg); }
+        50% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(${Math.random() * 20 - 10}deg); }
+        75% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(${Math.random() * 20 - 10}deg); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Chat logic
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    // FULL bilingual dialogue from your script — EXACTLY as provided
+    const dialogues = [
+      {
+        qKZ: "Сәлем! Сіздің зерттеу жобаңыздың тақырыбы қандай?",
+        aKZ: "Сәлеметсіз бе! Менің зерттеу тақырыбым – *“Мотивация адам дамуына әсер ете ме?”* Бұл жобада мен мотивацияның адамның когнитивтік, эмоциялық және әлеуметтік дамуына қалай әсер ететінін зерттеймін.",
+        qEN: "Hello! What is the topic of your research project?",
+        aEN: "Hi! My research project is titled *“Does motivation play a role in human development?”* It explores how motivation influences cognitive, emotional, and social growth."
+      },
+      {
+        qKZ: "Мотивация дегеніміз не және ол неге маңызды?",
+        aKZ: "Мотивация – адамның мақсатқа жетуге, кедергілерді жеңуге және өзін дамытуға итермелейтін ішкі күш. Ол адамның әрекетінің қозғаушысы, өмірлік өзгерістердің катализаторы болып табылады.",
+        qEN: "What is motivation and why is it important?",
+        aEN: "Motivation is the inner drive that pushes a person to achieve goals, overcome obstacles, and grow personally. It acts as a driving force and a catalyst for change in life."
+      },
+      {
+        qKZ: "Мотивация қалай қалыптасады?",
+        aKZ: "Мотивация ішкі (қызығушылық, құмарлық) және сыртқы (жүлде, қолдау, марапат) факторлардың әсерінен қалыптасады. Адам өскен сайын бұл факторлар күрделене түседі.",
+        qEN: "How is motivation formed?",
+        aEN: "Motivation is shaped by both internal factors (interest, curiosity) and external factors (rewards, recognition, support). As we grow, these factors become more complex."
+      },
+      {
+        qKZ: "Мотивация мақсат қою мен жетістікке жетуге қалай әсер етеді?",
+        aKZ: "Мотивация адамға нақты мақсат қоюға, оған бағыт пен табандылықпен жетуге көмектеседі. Ол өзіне сенімділік пен табыс сезімін береді.",
+        qEN: "How does motivation influence goal-setting and achievement?",
+        aEN: "Motivation helps people set clear goals, stay focused, and persist until they reach them. It gives confidence and a sense of accomplishment."
+      },
+      {
+        qKZ: "Мотивация когнитивтік дамуға қалай әсер етеді?",
+        aKZ: "Мотивация адамның ойлау қабілетін, есте сақтауын және үйренуге деген құлшынысын арттырады. Мотивациясы жоғары адам жаңа білімге ашық болады.",
+        qEN: "How does motivation affect cognitive development?",
+        aEN: "Motivation enhances attention, memory, and the desire to learn. Highly motivated people are more open to acquiring knowledge and solving problems creatively."
+      },
+      {
+        qKZ: "Мотивация адамның эмоциялық саулығына әсер ете ме?",
+        aKZ: "Иә. Мотивация адамның өзін бағалауына, сенімділігіне және өмірге позитивті көзқарасына әсер етеді. Ол күйзеліске қарсы тұруға және оптимизмді арттыруға көмектеседі.",
+        qEN: "Does motivation influence emotional well-being?",
+        aEN: "Yes, it does. Motivation boosts self-esteem, confidence, and optimism. It helps manage stress and maintain a positive outlook."
+      },
+      {
+        qKZ: "Мотивация әлеуметтік даму мен қарым-қатынасқа қалай әсер етеді?",
+        aKZ: "Мотивация адамды басқа адамдармен қарым-қатынас жасауға, бірігіп жұмыс істеуге және қоғамға үлес қосуға итермелейді.",
+        qEN: "How does motivation affect social development and communication?",
+        aEN: "Motivation encourages people to build relationships, cooperate with others, and contribute to their communities."
+      },
+      {
+        qKZ: "Ішкі және сыртқы мотивацияның айырмашылығы неде?",
+        aKZ: "Ішкі мотивация – адамның ішкі қызығушылығы мен ләззат алуынан туындайды, ал сыртқы мотивация – марапат, баға немесе қоғамның мойындауына негізделеді.",
+        qEN: "What is the difference between intrinsic and extrinsic motivation?",
+        aEN: "Intrinsic motivation comes from internal satisfaction and curiosity, while extrinsic motivation is driven by external rewards like grades or recognition."
+      },
+      {
+        qKZ: "Мотивацияны қалай арттыруға болады?",
+        aKZ: "1. Мақсатты нақты қойыңыз. 2. Ішкі қызығушылық табыңыз. 3. Өз жетістіктеріңізді мойындаңыз. 4. Қолдаушы орта қалыптастырыңыз. 5. Өзіңізге қамқор болыңыз.",
+        qEN: "How can we increase motivation?",
+        aEN: "1. Set clear and achievable goals. 2. Focus on your interests. 3. Celebrate small wins. 4. Surround yourself with supportive people. 5. Practice self-care and stay positive."
+      },
+      {
+        qKZ: "Ағылшын тілін үйренуде мотивация қандай рөл атқарады?",
+        aKZ: "Өте үлкен рөл атқарады. Егер адам өз мақсатын анық білсе (мысалы, шетелде оқу, саяхаттау, мансап), ол тілді жүйелі әрі қызығушылықпен үйренеді.",
+        qEN: "What role does motivation play in learning English?",
+        aEN: "A huge one. When learners have a clear goal—like studying abroad or improving their career—they study with more enthusiasm, consistency, and success."
+      },
+      {
+        qKZ: "Қиындықтар туындағанда мотивацияны қалай сақтаймыз?",
+        aKZ: "Өз жетістіктеріңізді еске түсіріңіз, кішкентай мақсаттар қойыңыз, және үзіліс жасап, энергияны қалпына келтіріңіз.",
+        qEN: "How can we maintain motivation during challenges?",
+        aEN: "Remind yourself of your past achievements, set small achievable goals, and take breaks to recharge your energy."
+      },
+      {
+        qKZ: "Сіздің зерттеуіңіздің қорытындысы қандай болды?",
+        aKZ: "Зерттеу нәтижесі бойынша мотивация адамның когнитивтік, эмоциялық және әлеуметтік дамуына зор әсер ететіні дәлелденді. Көптеген қатысушылар мотивацияның табыс пен өмір сапасын арттыратынын растады.",
+        qEN: "What were the main findings of your research?",
+        aEN: "The study confirmed that motivation greatly influences cognitive, emotional, and social development. Most participants agreed that motivation improves success and life satisfaction."
+      },
+      {
+        qKZ: "Мотивацияны арттыру үшін қандай практикалық кеңестер бересіз?",
+        aKZ: "* Ішкі мотивацияны дамытыңыз. * Нақты және қолжетімді мақсаттар қойыңыз. * Қолдаушы адамдармен араласыңыз. * Өз денсаулығыңызға көңіл бөліңіз.",
+        qEN: "What practical advice can help increase motivation?",
+        aEN: "* Cultivate intrinsic motivation. * Set clear, achievable goals. * Build a supportive environment. * Take care of your physical and emotional well-being."
+      },
+      {
+        qKZ: "Қорытынды ретінде не айтасыз?",
+        aKZ: "Мотивация – адам дамуының қозғаушы күші. Ол білім алуда, қарым-қатынаста және жеке өмірде жетістікке жетудің басты кілті.",
+        qEN: "What is your final conclusion?",
+        aEN: "Motivation is the driving force of human development. It is the key to success in learning, relationships, and personal growth."
+      },
+      {
+        qEN: "What motivates *you* to learn something new?",
+        aEN: "Curiosity and the joy of discovering new things!"
+      },
+      {
+        qEN: "How do you reward yourself after reaching a goal?",
+        aEN: "I take a break, treat myself, or start planning my next goal."
+      },
+      {
+        qEN: "What inspires you the most?",
+        aEN: "People who never give up, even after failure."
+      }
+    ];
+
+    function addMessage(text, isUser = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+      messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+      // Clean response: remove *, **, #, etc.
+      const cleanText = text.replace(/[*_~`]/g, '');
+      messageDiv.textContent = cleanText;
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function getBotResponse(userMsg) {
+      const originalMsg = userMsg.trim();
+      const lowerMsg = originalMsg.toLowerCase();
+
+      // Greetings
+      if (/сәлем|салам|сәлеметсіз|hello|hi|hey|здравствуй|good morning|good evening/i.test(lowerMsg)) {
+        if (/[^a-zA-Z]/.test(originalMsg)) {
+          return "Сәлеметсіз бе, Майрадан көмек – қалаған сұрағыңызды қойыңыз.";
+        } else {
+          return "Hello! Maira here – feel free to ask your question in English or Kazakh.";
+        }
+      }
+
+      // Match EXACTLY against provided dialogues (case-insensitive, flexible spacing)
+      for (const d of dialogues) {
+        // Check Kazakh questions
+        if (d.qKZ && lowerMsg === d.qKZ.toLowerCase().replace(/\?/g, '').trim()) {
+          return "Сәлеметсіз бе, Майрадан көмек – " + d.aKZ.replace(/[*_~`]/g, '');
+        }
+        // Check English questions
+        if (d.qEN && lowerMsg === d.qEN.toLowerCase().replace(/\?/g, '').trim()) {
+          return "Hello! Maira here – " + d.aEN.replace(/[*_~`]/g, '');
+        }
+      }
+
+      // Fallback: fuzzy match by keywords from dialogues
+      for (const d of dialogues) {
+        if (d.qKZ && lowerMsg.includes(d.qKZ.toLowerCase().split(' ')[0])) {
+          if (/[^a-zA-Z]/.test(originalMsg)) {
+            return "Сәлеметсіз бе, Майрадан көмек – " + d.aKZ.replace(/[*_~`]/g, '');
+          }
+        }
+        if (d.qEN && lowerMsg.includes(d.qEN.toLowerCase().split(' ')[0].replace(/\?/g, ''))) {
+          if (!/[^a-zA-Z]/.test(originalMsg)) {
+            return "Hello! Maira here – " + d.aEN.replace(/[*_~`]/g, '');
+          }
+        }
+      }
+
+      // Ultimate fallback
+      if (/[^a-zA-Z]/.test(originalMsg)) {
+        return "Сәлеметсіз бе, Майрадан көмек – Сіз қойған сұраққа мен толық жауап бере аламын! Мотивация – адам дамуының негізі. Ол мақсат қою, ойлау, эмоциялық тепе-теңдік пен әлеуметтік қарым-қатынасты қамтамасыз етеді. Нақты сұрақ қойсаңыз, сол бойынша дәл жауап беремін!";
+      } else {
+        return "Hello! Maira here – I can fully answer your question! Motivation is the foundation of human development. It enables goal-setting, thinking, emotional balance, and social interaction. If you ask a specific question, I’ll give you an exact answer based on my research!";
+      }
+    }
+
+    function sendMessage() {
+      const msg = userInput.value.trim();
+      if (!msg) return;
+
+      addMessage(msg, true);
+      userInput.value = '';
+
+      const response = getBotResponse(msg);
+      addMessage(response);
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>
+
